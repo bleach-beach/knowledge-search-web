@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEXUS // Knowledge Base</title>
+  <link rel="stylesheet" href="css/style.css?v=2026041902">
+</head>
+<body>
+  <!-- 粒子背景 -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- 宇宙探索模式 — 飞船 + 星星隧道 + 流光 -->
+  <div class="space-overlay" id="space-overlay">
+    <!-- 飞船（SVG 路径动画） — 外层位置 + 内层旋转 -->
+    <div class="spaceship" id="spaceship">
+      <div class="ship-rotator" id="ship-rotator">
+      <svg class="spaceship-svg" viewBox="0 0 160 110" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- 机身渐变 -->
+          <linearGradient id="shipGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2a5a8c"/>
+            <stop offset="40%" stop-color="#1a3a6c"/>
+            <stop offset="100%" stop-color="#0a1a3e"/>
+          </linearGradient>
+          <!-- 驾驶舱玻璃渐变 -->
+          <radialGradient id="cockpitGrad" cx="50%" cy="40%" r="50%">
+            <stop offset="0%" stop-color="rgba(0, 240, 255, 0.8)"/>
+            <stop offset="50%" stop-color="rgba(0, 180, 255, 0.4)"/>
+            <stop offset="100%" stop-color="rgba(0, 100, 200, 0.1)"/>
+          </radialGradient>
+          <!-- 机翼渐变 -->
+          <linearGradient id="wingGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#1a4a7a"/>
+            <stop offset="100%" stop-color="#0a2a4a"/>
+          </linearGradient>
+          <!-- 侧翼渐变 -->
+          <linearGradient id="sideWingGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1a3a5c"/>
+            <stop offset="100%" stop-color="#0a1a2e"/>
+          </linearGradient>
+          <!-- 引擎火焰外焰 -->
+          <linearGradient id="flameGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#00f0ff"/>
+            <stop offset="50%" stop-color="#0080ff"/>
+            <stop offset="100%" stop-color="#ff006e" stop-opacity="0"/>
+          </linearGradient>
+          <!-- 引擎火焰内焰 -->
+          <linearGradient id="flameInnerGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="100%" stop-color="#00f0ff" stop-opacity="0"/>
+          </linearGradient>
+          <!-- 装饰灯 -->
+          <radialGradient id="lightGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#00f0ff"/>
+            <stop offset="100%" stop-color="#00f0ff" stop-opacity="0"/>
+          </radialGradient>
+          <!-- 发光滤镜 -->
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+          <filter id="glowStrong">
+            <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+
+        <!-- 左外侧翼 -->
+        <path d="M50 45 L15 65 L10 75 L18 78 L52 58 Z" fill="url(#sideWingGrad)" stroke="#00f0ff" stroke-width="0.5" opacity="0.8"/>
+        <!-- 右外侧翼 -->
+        <path d="M110 45 L145 65 L150 75 L142 78 L108 58 Z" fill="url(#sideWingGrad)" stroke="#00f0ff" stroke-width="0.5" opacity="0.8"/>
+
+        <!-- 左主翼 -->
+        <path d="M52 38 L25 60 L22 72 L30 74 L55 52 Z" fill="url(#wingGrad)" stroke="#00f0ff" stroke-width="0.8"/>
+        <!-- 右主翼 -->
+        <path d="M108 38 L135 60 L138 72 L130 74 L105 52 Z" fill="url(#wingGrad)" stroke="#00f0ff" stroke-width="0.8"/>
+
+        <!-- 机翼装饰灯 -->
+        <circle cx="22" cy="72" r="1.5" fill="#ff006e" filter="url(#glow)" opacity="0.9"/>
+        <circle cx="138" cy="72" r="1.5" fill="#ff006e" filter="url(#glow)" opacity="0.9"/>
+        <circle cx="15" cy="65" r="1" fill="#00f0ff" filter="url(#glow)" opacity="0.7"/>
+        <circle cx="145" cy="65" r="1" fill="#00f0ff" filter="url(#glow)" opacity="0.7"/>
+
+        <!-- 机身主体 - 流线型 -->
+        <path d="M80 5 L90 20 L95 45 L92 75 L85 95 L80 100 L75 95 L68 75 L65 45 L70 20 Z" fill="url(#shipGrad)" stroke="#00f0ff" stroke-width="1" filter="url(#glow)"/>
+
+        <!-- 机身装饰线条 -->
+        <path d="M80 15 L87 35 L85 70 L80 88 L75 70 L73 35 Z" fill="none" stroke="rgba(0,240,255,0.3)" stroke-width="0.5"/>
+        <line x1="72" y1="40" x2="88" y2="40" stroke="rgba(0,240,255,0.2)" stroke-width="0.3"/>
+        <line x1="71" y1="50" x2="89" y2="50" stroke="rgba(0,240,255,0.2)" stroke-width="0.3"/>
+        <line x1="72" y1="60" x2="88" y2="60" stroke="rgba(0,240,255,0.2)" stroke-width="0.3"/>
+
+        <!-- 驾驶舱 - 发光玻璃穹顶 -->
+        <ellipse cx="80" cy="30" rx="9" ry="14" fill="url(#cockpitGrad)" stroke="#00f0ff" stroke-width="0.8" filter="url(#glowStrong)"/>
+        <!-- 驾驶舱高光 -->
+        <ellipse cx="78" cy="26" rx="3" ry="5" fill="rgba(255,255,255,0.15)"/>
+
+        <!-- 机头装饰灯 -->
+        <circle cx="80" cy="8" r="2" fill="#00f0ff" filter="url(#glowStrong)"/>
+
+        <!-- 引擎喷口 - 左 -->
+        <path d="M70 95 L73 108 L76 105 L75 95 Z" fill="#0a1a3e" stroke="#00f0ff" stroke-width="0.5"/>
+        <!-- 引擎喷口 - 右 -->
+        <path d="M84 95 L87 108 L90 105 L89 95 Z" fill="#0a1a3e" stroke="#00f0ff" stroke-width="0.5"/>
+
+        <!-- 引擎火焰 - 左外焰 -->
+        <path class="engine-flame" d="M71 105 L74 125 L77 105" fill="url(#flameGrad)" opacity="0.9"/>
+        <!-- 引擎火焰 - 左内焰 -->
+        <path class="engine-flame-inner" d="M73 105 L75 118 L77 105" fill="url(#flameInnerGrad)" opacity="0.7"/>
+
+        <!-- 引擎火焰 - 右外焰 -->
+        <path class="engine-flame" d="M83 105 L86 125 L89 105" fill="url(#flameGrad)" opacity="0.9"/>
+        <!-- 引擎火焰 - 右内焰 -->
+        <path class="engine-flame-inner" d="M85 105 L87 118 L89 105" fill="url(#flameInnerGrad)" opacity="0.7"/>
+
+        <!-- 机身底部装饰灯 -->
+        <circle cx="80" cy="85" r="1" fill="#ff006e" filter="url(#glow)" class="ship-light" opacity="0.8"/>
+        <circle cx="75" cy="78" r="0.8" fill="#00f0ff" filter="url(#glow)" class="ship-light" opacity="0.6"/>
+        <circle cx="85" cy="78" r="0.8" fill="#00f0ff" filter="url(#glow)" class="ship-light" opacity="0.6"/>
+      </svg>
+      </div><!-- /ship-rotator -->
+    </div><!-- /spaceship -->
+    <!-- 流光粒子层（搜索加速时激活） -->
+    <div class="light-streams" id="light-streams"></div>
+  </div>
+
+  <!-- 主内容 -->
+  <div class="main-container">
+    <!-- HUD 导航 -->
+    <header class="hud-header">
+      <div class="hud-logo">
+        <span class="logo-icon"></span>
+        NEXUS // KNOWLEDGE BASE
+      </div>
+      <div class="hud-stats">
+        <span class="stat-item">
+          <span class="stat-dot"></span>
+          SYSTEM ONLINE
+        </span>
+        <span class="stat-item">
+          <span class="stat-dot"></span>
+          DOCS: <span id="total-docs">12,847</span>
+        </span>
+        <span class="stat-item">
+          <span class="stat-dot warn"></span>
+          <span id="hud-time">00:00:00</span>
+        </span>
+        <span class="stat-item mode-toggle" id="mode-toggle" title="切换探索模式">
+          <span class="stat-dot"></span>
+          🚀 EXPLORE MODE
+        </span>
+        <span class="stat-item admin-toggle" id="admin-toggle" title="系统设置">
+          <span class="stat-dot"></span>
+          ⚙ SETTINGS
+        </span>
+      </div>
+    </header>
+
+    <!-- 搜索区域 -->
+    <section class="search-section">
+      <h1 class="search-title" data-text="KNOWLEDGE NEXUS">KNOWLEDGE NEXUS</h1>
+      <p class="search-subtitle">// ACCESS THE COLLECTIVE INTELLIGENCE</p>
+
+      <div class="search-box">
+        <div class="search-input-wrapper">
+          <input 
+            type="text" 
+            id="search-input" 
+            placeholder="输入关键词，探索知识宇宙..."
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <button class="search-btn" id="search-btn" aria-label="搜索">
+            <svg viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="quick-tags" id="quick-tags"></div>
+    </section>
+
+    <!-- 搜索结果 -->
+    <section class="results-section" id="results-section">
+      <div class="results-header">
+        <div class="results-count" id="results-count"></div>
+        <div class="results-sort">
+          <button class="sort-btn active">相关度</button>
+          <button class="sort-btn">最新</button>
+          <button class="sort-btn">热度</button>
+        </div>
+      </div>
+
+      <!-- 加载动画 -->
+      <div class="loading-container" id="loading-container">
+        <div class="loading-ring"></div>
+        <div class="loading-text">SEARCHING KNOWLEDGE MATRIX...</div>
+      </div>
+
+      <!-- 空状态 -->
+      <div class="empty-state" id="empty-state">
+        <div class="empty-icon">∅</div>
+        <div class="empty-text">NO DATA FOUND IN KNOWLEDGE MATRIX</div>
+      </div>
+
+      <!-- 结果网格 -->
+      <div class="results-grid" id="results-grid"></div>
+    </section>
+  </div>
+
+  <!-- 详情面板（侧边抽屉） -->
+  <div class="detail-overlay" id="detail-overlay"></div>
+  <aside class="detail-panel" id="detail-panel">
+    <div class="detail-header">
+      <div class="detail-header-info">
+        <span class="card-category" id="detail-category">前端开发</span>
+        <span class="card-id" id="detail-id">KB-001</span>
+      </div>
+      <button class="detail-close-btn" id="detail-close-btn" aria-label="关闭">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2"/>
+          <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="detail-body">
+      <h2 class="detail-title" id="detail-title">文档标题</h2>
+      
+      <div class="detail-meta">
+        <div class="meta-item">
+          <span class="meta-label">来源</span>
+          <span class="meta-value" id="detail-source">技术文档库</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">匹配度</span>
+          <span class="meta-value score" id="detail-score">98%</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">更新时间</span>
+          <span class="meta-value" id="detail-date">2026-04-15</span>
+        </div>
+      </div>
+
+      <div class="detail-tags" id="detail-tags"></div>
+
+      <div class="detail-section">
+        <h3 class="detail-section-title">摘要</h3>
+        <p class="detail-summary" id="detail-summary">文档摘要内容</p>
+      </div>
+
+      <div class="detail-section">
+        <h3 class="detail-section-title">文档内容</h3>
+        <div class="detail-content" id="detail-content">
+          <!-- 动态渲染文档正文 -->
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h3 class="detail-section-title">相关文档</h3>
+        <div class="related-list" id="related-list">
+          <!-- 动态渲染相关文档 -->
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-footer">
+      <button class="detail-action-btn" id="detail-bookmark-btn">
+        <svg viewBox="0 0 24 24" width="16" height="16">
+          <path d="M5 3l14 9-7 5-7-5z" fill="currentColor"/>
+        </svg>
+        收藏
+      </button>
+      <button class="detail-action-btn primary" id="detail-external-btn">
+        <svg viewBox="0 0 24 24" width="16" height="16">
+          <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        原文
+      </button>
+    </div>
+  </aside>
+
+  <!-- 管理面板（侧边抽屉） -->
+  <div class="admin-overlay" id="admin-overlay"></div>
+  <aside class="admin-panel" id="admin-panel">
+    <div class="admin-header">
+      <div class="admin-header-info">
+        <span class="card-category">SYSTEM</span>
+        <span class="card-id">⚙ CONFIGURATION</span>
+      </div>
+      <button class="admin-close-btn" id="admin-close-btn" aria-label="关闭">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2"/>
+          <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="admin-body">
+      <!-- LLM 配置 -->
+      <div class="admin-section">
+        <h3 class="admin-section-title">LLM 配置</h3>
+        <div class="admin-form-group">
+          <label class="admin-label">Backend</label>
+          <select class="admin-select" id="admin-llm-backend">
+            <option value="">(使用默认)</option>
+            <option value="openai">OpenAI</option>
+            <option value="ollama">Ollama</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-label">Model</label>
+          <input type="text" class="admin-input" id="admin-llm-model" placeholder="gpt-4o">
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-label">Base URL</label>
+          <input type="text" class="admin-input" id="admin-llm-base-url" placeholder="https://api.openai.com/v1">
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-label">API Key</label>
+          <input type="password" class="admin-input" id="admin-llm-api-key" placeholder="sk-...">
+        </div>
+      </div>
+
+      <!-- 搜索默认配置 -->
+      <div class="admin-section">
+        <h3 class="admin-section-title">搜索默认配置</h3>
+        <div class="admin-form-group">
+          <label class="admin-label">LLM 总结</label>
+          <label class="admin-toggle-switch">
+            <input type="checkbox" id="admin-search-summarize">
+            <span class="admin-toggle-slider"></span>
+          </label>
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-label">联网补充搜索</label>
+          <label class="admin-toggle-switch">
+            <input type="checkbox" id="admin-search-web-supplement">
+            <span class="admin-toggle-slider"></span>
+          </label>
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-label">默认结果数 (top_k)</label>
+          <input type="number" class="admin-input" id="admin-search-top-k" min="1" max="50" value="5">
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-label">去重模式</label>
+          <select class="admin-select" id="admin-search-dedup-mode">
+            <option value="file">按文件去重</option>
+            <option value="none">不去重</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 服务器配置 -->
+      <div class="admin-section">
+        <h3 class="admin-section-title">服务器配置</h3>
+        <div class="admin-form-group">
+          <label class="admin-label">CORS 来源（逗号分隔）</label>
+          <input type="text" class="admin-input" id="admin-server-cors" placeholder="http://localhost:3000,http://localhost:8080">
+        </div>
+      </div>
+
+      <!-- Toast 提示 -->
+      <div class="admin-toast" id="admin-toast"></div>
+    </div>
+
+    <div class="admin-footer">
+      <button class="admin-action-btn" id="admin-reset-btn">重置默认</button>
+      <button class="admin-action-btn primary" id="admin-save-btn">保存配置</button>
+    </div>
+  </aside>
+
+  <!-- Three.js CDN (粒子系统依赖) -->
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+
+  <!-- Markdown 渲染库 -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <!-- 脚本 -->
+  <script src="js/particles.js?v=2026041901"></script>
+  <script src="js/search.js?v=2026041902"></script>
+  <script src="js/detail.js?v=2026041901"></script>
+  <script src="js/admin.js?v=2026041901"></script>
+  <script src="js/main.js?v=2026041902"></script>
+</body>
+</html>
