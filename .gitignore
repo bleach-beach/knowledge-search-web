@@ -3,3 +3,4 @@
 .clawd-todos.json
 .sandbox-home
 .sandbox-tmp
+.DS_Store
