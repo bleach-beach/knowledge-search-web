@@ -156,6 +156,10 @@
           <span class="stat-dot"></span>
           🚀 EXPLORE MODE
         </span>
+        <span class="stat-item butler-toggle" id="butler-toggle" title="AI智能管家">
+          <span class="stat-dot"></span>
+          🤖 AI BUTLER
+        </span>
         <span class="stat-item admin-toggle" id="admin-toggle" title="系统设置">
           <span class="stat-dot"></span>
           ⚙ SETTINGS
@@ -362,6 +366,66 @@
         </div>
       </div>
 
+      <!-- AI 管家配置 -->
+      <div class="admin-section">
+        <h3 class="admin-section-title">AI 管家配置</h3>
+        <div class="admin-form-group">
+          <label class="admin-label">昵称</label>
+          <input type="text" class="admin-input" id="admin-butler-nickname" placeholder="NEXUS" value="NEXUS">
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-label">头像图片 URL</label>
+          <input type="text" class="admin-input" id="admin-butler-avatar" placeholder="/api/admin/avatars/avatar_xxx.png">
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-label">或上传本地图片</label>
+          <div class="admin-upload-area">
+            <input type="file" class="admin-file-input" id="admin-butler-avatar-file" accept="image/*" onchange="uploadAvatarToServer(this.files[0])">
+            <div class="admin-upload-hint">点击选择图片（JPG/PNG/GIF）→ 自动上传到服务器</div>
+          </div>
+          <div class="admin-avatar-preview" id="admin-avatar-preview">
+            <!-- 预览图片将显示在这里 -->
+          </div>
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-label">系统提示词 (System Prompt)</label>
+          <textarea class="admin-textarea" id="admin-butler-system-prompt" rows="8" placeholder="AI 管家的系统提示词...">你是 NEXUS 知识库的智能管家 AI，一个专业、高效、友善的知识助手。
+
+你的职责：
+1. 基于用户的知识库内容回答问题
+2. 如果用户问题与知识库内容相关，优先引用知识库中的资料
+3. 如果知识库中没有相关内容，基于你的通用知识回答，并说明"知识库中未找到相关内容"
+4. 回答要结构清晰、重点突出、简洁专业
+
+回答格式要求：
+- 先直接给出答案核心
+- 如有知识库资料，标注参考来源
+- 使用 Markdown 格式增强可读性
+- 保持专业但友好的语气</textarea>
+        </div>
+        <button class="admin-action-btn primary" onclick="saveAIAssistantConfig()">保存 AI 管家配置</button>
+      </div>
+
+      <!-- 知识库目录管理 -->
+      <div class="admin-section">
+        <h3 class="admin-section-title">知识库目录管理</h3>
+        <div class="admin-form-group">
+          <label class="admin-label">添加知识库目录</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <input type="text" class="admin-input" id="vault-add-path" placeholder="/path/to/knowledge-base" style="flex:1;min-width:200px;">
+            <input type="text" class="admin-input" id="vault-add-name" placeholder="自定义名称（可选）" style="flex:1;min-width:150px;">
+            <button class="admin-action-btn primary" id="vault-add-btn" onclick="addVault()">添加</button>
+          </div>
+        </div>
+        <div id="vault-list">
+          <div class="admin-empty-state">加载中...</div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
+          <button class="admin-action-btn primary" id="rebuild-all-btn" onclick="rebuildAllVaults()">🔄 重建全部索引</button>
+          <span class="index-status" id="index-status-info">加载中...</span>
+        </div>
+      </div>
+
       <!-- 服务器配置 -->
       <div class="admin-section">
         <h3 class="admin-section-title">服务器配置</h3>
@@ -389,9 +453,11 @@
 
   <!-- 脚本 -->
   <script src="js/particles.js?v=2026041901"></script>
+  <script src="js/planet-surface.js?v=2026041901"></script>
   <script src="js/search.js?v=2026041902"></script>
   <script src="js/detail.js?v=2026041901"></script>
   <script src="js/admin.js?v=2026041901"></script>
   <script src="js/main.js?v=2026041902"></script>
+  <script src="js/navigation-butler.js?v=2026050901"></script>
 </body>
 </html>

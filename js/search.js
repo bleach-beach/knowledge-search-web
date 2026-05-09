@@ -9,19 +9,72 @@ const API_BASE_URL = window.KB_API_BASE || 'http://localhost:8000';
 // 通过 API 动态获取超时时间
 let API_TIMEOUT_MS = 300000;  // 默认 5 分钟（考虑 LLM 总结）
 
-// 快捷标签
-const QUICK_TAGS = ['React', 'TypeScript', '微服务', '数据库', 'Docker', 'AI', '安全', 'GraphQL'];
-
 // 搜索设置（用户可配置）— 挂载到 window 供 admin.js 同步
 let searchSettings = {
   dedupMode: 'file',  // 'file' | 'none'
   summarize: false,
   webSupplement: false,
+  defaultTopK: 10,    // 默认结果数（从 admin 配置同步）
 };
 window.searchSettings = searchSettings;
 
 // 缓存搜索结果（用于详情面板）— 挂载到 window 供 detail.js 访问
 let lastSearchResults = window.lastSearchResults = [];
+
+// 动态分类标签（从 API 加载）
+let categoryTags = [];
+
+/**
+ * 加载动态分类标签（从 /api/knowledge/categories）
+ */
+async function loadCategoryTags() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/knowledge/categories`);
+    if (!res.ok) {
+      console.warn('[search] 加载分类标签失败，使用空列表');
+      categoryTags = [];
+      renderQuickTags(categoryTags);
+      return;
+    }
+    const data = await res.json();
+    categoryTags = data.categories.map(cat => cat.name);
+    renderQuickTags(categoryTags);
+  } catch (err) {
+    console.warn('[search] 加载分类标签失败:', err.message);
+    // 失败时不显示任何标签
+    categoryTags = [];
+    renderQuickTags(categoryTags);
+  }
+}
+
+/**
+ * 渲染快捷标签
+ */
+function renderQuickTags(tags) {
+  const quickTagsContainer = document.getElementById('quick-tags');
+  if (!quickTagsContainer) return;
+
+  if (!tags || tags.length === 0) {
+    quickTagsContainer.innerHTML = '';
+    return;
+  }
+
+  quickTagsContainer.innerHTML = tags.map(tag =>
+    `<span class="quick-tag" data-query="${tag}">${tag}</span>`
+  ).join('');
+
+  // 快捷标签点击事件
+  quickTagsContainer.addEventListener('click', (e) => {
+    const tag = e.target.closest('.quick-tag');
+    if (tag) {
+      const searchInput = document.getElementById('search-input');
+      if (searchInput) {
+        searchInput.value = tag.dataset.query;
+      }
+      performSearch(tag.dataset.query);
+    }
+  });
+}
 
 /**
  * 调用后端搜索 API
@@ -193,6 +246,16 @@ function renderResults(results, query, apiResponse) {
   // 3D 倾斜效果 + 点击打开详情
   initCardTiltAndClick(results);
 
+  // 宇宙探索模式：初始化星球 canvas 3D 渲染器
+  if (isExplore && window.initPlanetRenderers) {
+    setTimeout(() => {
+      window.initPlanetRenderers(grid);
+      if (window.startPlanetAnimation) {
+        window.startPlanetAnimation();
+      }
+    }, 100);
+  }
+
   // 渲染 LLM 总结
   if (apiResponse) {
     renderSummary(apiResponse.summary, apiResponse.query);
@@ -282,7 +345,7 @@ function renderSummary(summary, query) {
     summaryContainer = document.createElement('div');
     summaryContainer.id = 'summary-container';
     summaryContainer.style.cssText = `
-      margin-top: 2rem;
+      margin-top: 5rem;
       background: rgba(0, 255, 255, 0.03);
       border: 1px solid rgba(0, 255, 255, 0.15);
       border-radius: 12px;
@@ -322,7 +385,7 @@ function renderSummary(summary, query) {
 
 /**
  * 3D 卡片倾斜效果 + 点击打开详情
- * 
+ *
  * 点击：使用事件委托（只绑定一次到 grid 上）
  * 倾斜：每次渲染后绑定到新卡片
  */
@@ -440,7 +503,7 @@ async function performSearch(query) {
   }
 
   try {
-    const apiResponse = await searchAPI(query, { top_k: 10 });
+    const apiResponse = await searchAPI(query, { top_k: searchSettings.defaultTopK });
     const results = adaptAPIToFrontend(apiResponse);
     renderResults(results, query, apiResponse);
   } catch (error) {
@@ -455,25 +518,7 @@ async function performSearch(query) {
 function initSearch() {
   const searchInput = document.getElementById('search-input');
   const searchBtn = document.getElementById('search-btn');
-  const quickTagsContainer = document.getElementById('quick-tags');
   const resultsSection = document.getElementById('results-section');
-
-  // 渲染快捷标签
-  if (quickTagsContainer) {
-    quickTagsContainer.innerHTML = QUICK_TAGS.map(tag => 
-      `<span class="quick-tag" data-query="${tag}">${tag}</span>`
-    ).join('');
-
-    // 快捷标签点击
-    quickTagsContainer.addEventListener('click', (e) => {
-      const tag = e.target.closest('.quick-tag');
-      if (tag) {
-        searchInput.value = tag.dataset.query;
-        searchInput.focus();
-        performSearch(tag.dataset.query);
-      }
-    });
-  }
 
   // 搜索按钮
   if (searchBtn) {
@@ -506,9 +551,12 @@ function initSearch() {
   if (resultsSection) {
     resultsSection.style.display = 'none';
   }
+
+  // 动态加载分类标签
+  loadCategoryTags();
 }
 
 // 导出
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { initSearch };
+  module.exports = { initSearch, loadCategoryTags };
 }

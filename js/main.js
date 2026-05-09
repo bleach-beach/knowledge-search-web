@@ -85,6 +85,43 @@ function initExploreMode() {
   }
 }
 
+// ===== AI 女管家导航模式切换 =====
+function initButlerToggle() {
+  const butlerToggle = document.getElementById('butler-toggle');
+  if (!butlerToggle) return;
+  butlerToggle.addEventListener('click', () => {
+    const isCurrentlyActive = butlerToggle.classList.contains('active');
+
+    if (isCurrentlyActive) {
+      // 关闭：隐藏头像 + 关闭面板 + 退出导航模式
+      document.body.classList.remove('navigation-mode');
+      localStorage.setItem('nexus-navigation-mode', '0');
+      localStorage.setItem('nexus-avatar-hidden', '1');
+      butlerToggle.classList.remove('active');
+      // 隐藏头像
+      const avatar = document.getElementById('butler-avatar');
+      if (avatar) avatar.style.display = 'none';
+      // 关闭面板
+      if (typeof window.toggleButlerChat === 'function') {
+        window.toggleButlerChat();
+      }
+    } else {
+      // 开启：显示头像 + 打开面板 + 进入导航模式
+      document.body.classList.add('navigation-mode');
+      localStorage.setItem('nexus-navigation-mode', '1');
+      localStorage.setItem('nexus-avatar-hidden', '0');
+      butlerToggle.classList.add('active');
+      // 显示头像
+      const avatar = document.getElementById('butler-avatar');
+      if (avatar) avatar.style.display = '';
+      // 打开面板
+      if (typeof window.toggleButlerChat === 'function') {
+        window.toggleButlerChat();
+      }
+    }
+  });
+}
+
 // ===== 飞船动画循环 =====
 let animFrameId = null;
 let lastTrailTime = 0;
@@ -337,26 +374,32 @@ function stopSearchBoost() {
 window.triggerSearchBoost = triggerSearchBoost;
 window.stopSearchBoost = stopSearchBoost;
 window.isExploreModeActive = () => isExploreMode;
-// ===== 星球 hover 加速旋转 =====
-document.addEventListener('mouseover', (e) => {
-  if (!isExploreMode) return;
-  const card = e.target.closest('.result-card');
-  if (!card) return;
-  const sphere = card.querySelector('.planet-sphere');
-  if (sphere) {
-    sphere.classList.add('planet-hovering');
-  }
-}, true);
+// ===== 星球 hover 加速旋转（旧版 CSS 方式，已废弃，由 planet-surface.js 接管）=====
+// 保留兼容：如果 planet-surface.js 未加载，fallback 到旧的 CSS 方式
+if (typeof window.initPlanetHover !== 'function') {
+  document.addEventListener('mouseover', (e) => {
+    if (!isExploreMode) return;
+    const card = e.target.closest('.result-card');
+    if (!card) return;
+    const sphere = card.querySelector('.planet-sphere');
+    if (sphere) {
+      sphere.classList.add('planet-hovering');
+    }
+  }, true);
 
-document.addEventListener('mouseout', (e) => {
-  if (!isExploreMode) return;
-  const card = e.target.closest('.result-card');
-  if (!card) return;
-  const sphere = card.querySelector('.planet-sphere');
-  if (sphere) {
-    sphere.classList.remove('planet-hovering');
-  }
-}, true);
+  document.addEventListener('mouseout', (e) => {
+    if (!isExploreMode) return;
+    const card = e.target.closest('.result-card');
+    if (!card) return;
+    const sphere = card.querySelector('.planet-sphere');
+    if (sphere) {
+      sphere.classList.remove('planet-hovering');
+    }
+  }, true);
+} else {
+  // 使用新的 canvas 渲染器 hover 处理
+  window.initPlanetHover();
+}
 
 // ===== 星球差异化旋转速度 =====
 // 给每个星球设置不同的旋转速度和方向
@@ -411,7 +454,7 @@ function isClickableElement(el) {
   const tag = el.tagName.toLowerCase();
   const interactiveTags = ['a', 'button', 'input', 'textarea', 'select', 'label'];
   if (interactiveTags.includes(tag)) return true;
-  if (el.closest('.search-box, .quick-tags, .result-card, .detail-panel, .admin-panel, .hud-header, .spaceship')) return true;
+  if (el.closest('.search-box, .quick-tags, .result-card, .detail-panel, .admin-panel, .hud-header, .spaceship, .butler-avatar, .butler-chat-panel, .butler-panel-header, .butler-resize-handle, .butler-btn-close')) return true;
   if (el.classList.contains('search-btn') || el.classList.contains('quick-tag')) return true;
   return false;
 }
@@ -546,9 +589,20 @@ document.addEventListener('click', (e) => {
   fireBullets(e.clientX, e.clientY);
 });
 
-function updateHUDStats() {
+async function updateHUDStats() {
   const totalDocs = document.getElementById('total-docs');
-  if (totalDocs) totalDocs.textContent = '12,847';
+  if (!totalDocs) return;
+
+  try {
+    const res = await fetch(`${window.KB_API_BASE || 'http://localhost:8000'}/api/health`);
+    if (!res.ok) throw new Error('health API failed');
+    const data = await res.json();
+    const files = data.total_files || 0;
+    totalDocs.textContent = files.toLocaleString();
+  } catch (err) {
+    console.warn('[HUD] 获取文档数失败，使用默认值:', err.message);
+    totalDocs.textContent = '—';
+  }
 }
 
 function updateTime() {
@@ -574,6 +628,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   initExploreMode();
+  initButlerToggle();
   initSearch();
   initDetail();
   updateHUDStats();
